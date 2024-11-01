@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+
 @RestController
 @RequestMapping("/api/boards")
 public class ArticleController {
@@ -72,6 +73,6 @@ public class ArticleController {
     @GetMapping("/{boardId}/articles/{articleId}")
     public ResponseEntity<Article> getArticleWithComment(@PathVariable Long boardId, @PathVariable Long articleId) throws JsonProcessingException {
         CompletableFuture<Article> article = commentService.getArticleWithComment(boardId, articleId);
-        return ResponseEntity.ok(article.resultNow());
+        return ResponseEntity.ok(article.join());
     }
 }

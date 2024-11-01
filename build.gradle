@@ -9,7 +9,8 @@ version = '0.0.1-SNAPSHOT'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(21)
+		vendor = JvmVendorSpec.ADOPTIUM // 원하는 vendor 지정
 	}
 }
 
@@ -24,15 +25,60 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	// Spring Boot의 웹 애플리케이션 개발을 위한 기본적인 기능을 제공 (MVC, REST API)
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// Spring Data JPA를 사용하여 데이터베이스와의 상호작용을 쉽게 처리
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// Spring Security를 통해 인증 및 권한 부여 기능을 제공
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	// JWT (JSON Web Token)를 위한 API (토큰 생성 및 검증)
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+
+	// JWT 구현체 (JJWT 라이브러리의 핵심 부분)
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+
+	// JWT에서 JSON 처리에 Jackson을 사용
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+	// MySQL 데이터베이스와 연결을 위한 JDBC 드라이버
+	implementation 'mysql:mysql-connector-java:8.0.32'
+
+	// SpringDoc을 사용하여 OpenAPI (Swagger) UI 제공 (API 문서화)
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+
+	// HikariCP는 경량화된 고성능 JDBC 커넥션 풀
+	implementation 'com.zaxxer:HikariCP:5.0.1'
+
+	// WebFlux를 사용한 비동기, 반응형 웹 애플리케이션 개발 지원 (Elastic Search와의 통합을 위해 사용)
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	// Redis 데이터베이스 지원 (Redis를 통한 캐시, 데이터 저장 등에 사용)
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+	// MongoDB 데이터베이스 지원 (MongoDB와의 통합 및 데이터 처리)
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
+	// Spring Batch를 사용하여 대량의 데이터 처리를 위한 배치 처리 기능 제공
+	implementation 'org.springframework.boot:spring-boot-starter-batch'
+
+	// RabbitMQ 메시지 브로커와 통합을 위한 지원 (메시지 큐 처리)
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+
+	// Lombok은 코드에서 getter, setter, 생성자 등을 자동으로 생성해주는 라이브러리 (컴파일 시에만 사용)
 	compileOnly 'org.projectlombok:lombok'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	annotationProcessor 'org.projectlombok:lombok'
+
+	// Spring Boot의 테스트 기능을 제공 (JUnit 및 Mock 지원)
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	// JUnit 플랫폼 런처 (테스트 실행을 위한 런타임 의존성)
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
 }
+

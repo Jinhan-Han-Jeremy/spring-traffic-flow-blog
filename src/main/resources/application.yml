@@ -1,0 +1,47 @@
+
+server:
+  port: 8070
+  error:
+    whitelabel:
+      enabled: false
+
+spring:
+  application:
+    name: TrafficBlog
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/adarticle-db
+    username: jinhan
+    password: 57575han
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      pool-name: HikariCP
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 30000
+      connection-timeout: 20000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.MySQLDialect
+    # Hibernate ?? (????)
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/adarticle-db
+#    redis:
+#      host: localhost
+#      port: 6379
+#
+#  rabbitmq:
+#    host: localhost
+#    port: 5672
+#    username: jinhan
+#    password: 57575han

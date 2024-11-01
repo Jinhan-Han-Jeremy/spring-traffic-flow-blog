@@ -1,6 +1,5 @@
 package com.jinhan.TrafficBlog.entity;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
