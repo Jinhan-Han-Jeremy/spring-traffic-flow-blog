@@ -1,105 +1,84 @@
 services:
-  # MySQL 서비스 설정
   mysql-db:
-    image: mysql:5.7  # MySQL 버전 5.7 이미지
-    restart: always  # 항상 재시작
-    platform: linux/amd64  # 플랫폼 설정
+    image: mysql:5.7
+    restart: always
+    platform: linux/amd64
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}  # 루트 비밀번호 설정
-      MYSQL_DATABASE: ${MYSQL_DB_NAME} # 데이터베이스 이름
-      MYSQL_USER: ${MYSQL_USER}  # 사용자 이름
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}  # 사용자 비밀번호
-
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB_NAME}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
-      - "${MYSQL_PORT}:${MYSQL_PORT}"  # MySQL 포트 매핑
+      - "${MYSQL_PORT}:${MYSQL_PORT}"
     volumes:
-      - db_data:/var/lib/mysql  # 데이터 저장 경로
-
-  # Elasticsearch 서비스 설정
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3  # Elasticsearch 이미지
-    container_name: elasticsearch  # 컨테이너 이름
-    environment:
-      - node.name=elasticsearch  # 노드 이름 설정
-      - cluster.name=docker-cluster  # 클러스터 이름 설정
-      - discovery.type=single-node  # 단일 노드 설정
-      - bootstrap.memory_lock=true  # 메모리 잠금 설정
-      - "ES_JAVA_OPTS=${ES_JAVA_OPTS}"  # JVM 옵션 설정
-      - xpack.security.enabled=false  # 보안 비활성화
-      - xpack.security.transport.ssl.enabled=false  # SSL 비활성화
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}  # Elasticsearch 비밀번호 설정
-    ulimits:
-      memlock:
-        soft: -1  # 메모리 잠금 설정 (soft)
-        hard: -1  # 메모리 잠금 설정 (hard)
-    volumes:
-      - es-data:/usr/share/elasticsearch/data  # 데이터 저장 경로
-    ports:
-      - "${ES_PORT}:${ES_PORT}"  # Elasticsearch 포트 매핑
-    command: >  # 실행 명령어
-      sh -c "
-      bin/elasticsearch-plugin install analysis-nori;
-      bin/elasticsearch
-      "
-
-  #
-  #  # Kibana 서비스 설정
-  #  kibana:
-  #    image: docker.elastic.co/kibana/kibana:8.5.0  # Kibana 이미지
-  #    container_name: kibana  # 컨테이너 이름
-  #    environment:
-  #      ELASTICSEARCH_HOSTS: http://elasticsearch:${ES_PORT}  # Elasticsearch 호스트 설정
-  #    ports:
-  #      - "${KIBANA_PORT}:${KIBANA_PORT}"  # Kibana 포트 매핑
-  #
-  #  # Logstash 서비스 설정
-  #  logstash:
-  #    image: docker.elastic.co/logstash/logstash:8.5.0  # Logstash 이미지
-  #    container_name: logstash  # 컨테이너 이름
-  #    environment:
-  #      - xpack.monitoring.enabled=false  # 모니터링 비활성화
-  #      - LOGSTASH_JAVA_OPTS=${LOGSTASH_JAVA_OPTS}  # JVM 옵션 설정
-  #    volumes:
-  #      - ./logstash/pipeline:/usr/share/logstash/pipeline  # 파이프라인 설정
-  #      - ./logstash/mysql-connector-j-9.0.0.jar:/usr/share/logstash/mysql-connector-j-9.0.0.jar  # MySQL 커넥터
-  #    ports:
-  #      - "${LOGSTASH_PORT_MAPPING}:${LOGSTASH_PORT_MAPPING}"  # 포트 매핑
-  #      - "${LOGSTASH_PORT_MONITOR}:${LOGSTASH_PORT_MONITOR}"  # 모니터링 API 포트
-  #
-  #  # Redis 서비스 설정
-  #  redis:
-  #    image: redis:7  # Redis 이미지
-  #    container_name: redis-server  # 컨테이너 이름
-  #    ports:
-  #      - "${REDIS_PORT}:${REDIS_PORT}" # Redis 포트 매핑
-  #    volumes:
-  #      - redis-data:/data  # 데이터 저장 경로
-  #
-  # MongoDB 서비스 설정
-  mongodb:
-    image: mongo:7  # MongoDB 이미지
-    container_name: mongodb-server  # 컨테이너 이름
-    ports:
-      - "${MONGODB_PORT}:${MONGODB_PORT}"  # MongoDB 포트 매핑
-    volumes:
-      - mongo-data:/data/db  # 데이터 저장 경로
+      - ./my.cnf:/etc/mysql/conf.d/my.cnf
+      - db_data:/var/lib/mysql
+    networks:
+      - app-network
 #
-#  # RabbitMQ 서비스 설정
-#  rabbitmq:
-#    image: rabbitmq:3-management  # RabbitMQ 관리 이미지
-#    container_name: rabbitmq  # 컨테이너 이름
+#  elasticsearch:
+#    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+#    container_name: elasticsearch
 #    ports:
-#      - "${RABBITMQ_PORT}:${RABBITMQ_PORT}"  # RabbitMQ 서버 포트
-#      - "${RABBITMQ_MANAGEMENT_PORT}:${RABBITMQ_MANAGEMENT_PORT}"  # 관리 콘솔 포트
-#    environment:
-#      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}  # 기본 사용자 이름
-#      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}  # 기본 사용자 비밀번호
+#      - "${ES_PORT}:${ES_PORT}"
+#      - "${CLUSTER_ES_PORT}:${CLUSTER_ES_PORT}"
 #    volumes:
-#      - rabbitmq_data:/var/lib/rabbitmq  # 데이터 저장 경로
+#      - ./data/elasticsearch:/usr/share/elasticsearch/data
+#    environment:
+#      discovery.type: single-node
+#      ELASTIC_USERNAME: ${ELASTIC_USERNAME}  # 환경 변수 설정 필요
+#      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+#      xpack.security.enabled: false
+#      xpack.security.enrollment.enabled: false
+#    networks:
+#      - app-network
+#
+#  kibana:
+#    image: docker.elastic.co/kibana/kibana:8.5.0
+#    container_name: kibana
+#    environment:
+#      ELASTICSEARCH_HOSTS: "http://elasticsearch:${ES_PORT}"
+#    ports:
+#      - "${KIBANA_PORT}:${KIBANA_PORT}"
+#    volumes:
+#      - ./config/kibana.yml:/usr/share/kibana/config/kibana.yml
+#    networks:
+#      - app-network
+#
+#  logstash:
+#    image: docker.elastic.co/logstash/logstash:8.13.4
+#    container_name: logstash
+#    ports:
+#      - "${LOGSTASH_PORT}:${LOGSTASH_PORT}"
+#      - "${LOGSTASH_PORT_MAPPING}:${LOGSTASH_PORT_MAPPING}"
+#    depends_on:
+#      - elasticsearch
+#    environment:
+#      xpack.monitoring.enabled: false
+#      LOGSTASH_JAVA_OPTS: "-Xms512m -Xmx512m"
+#    volumes:
+#      - ./logstash/pipeline:/usr/share/logstash/pipeline
+#      - ./logstash/mysql-connector-j-9.0.0.jar:/usr/share/logstash/mysql-connector-j-9.0.0.jar
+#    networks:
+#      - app-network
+
+  mongodb:
+    image: mongo:7
+    container_name: mongodb-server
+    ports:
+      - "${MONGODB_PORT}:${MONGODB_PORT}"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - app-network
 
 volumes:
   db_data:  # MySQL 데이터
   es-data:  # Elasticsearch 데이터
+  mongo_data:  # MongoDB 데이터
   redis-data:  # Redis 데이터
-  mongo-data:  # MongoDB 데이터
-  rabbitmq_data:
+  rabbitmq_data:  # RabbitMQ 데이터
+
+networks:
+  app-network:
+    driver: bridge
