@@ -25,7 +25,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     database-platform: org.hibernate.dialect.MySQLDialect
     # Hibernate ?? (????)
     show-sql: true
@@ -36,12 +36,13 @@ spring:
   data:
     mongodb:
       uri: mongodb://localhost:27017/adarticle-db
+
 #    redis:
 #      host: localhost
 #      port: 6379
 #
-#  rabbitmq:
-#    host: localhost
-#    port: 5672
-#    username: jinhan
-#    password: 57575han
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: jinhan
+    password: 57575han

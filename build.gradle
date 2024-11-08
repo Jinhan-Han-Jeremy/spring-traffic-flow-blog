@@ -77,7 +77,13 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+springBoot {
+	mainClass = 'com.jinhan.TrafficBlog.TrafficBlogApplication' // 실행할 main 클래스 지정
+}
+
+
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
 
