@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>localhost:9400</destination> <!-- Adjust as necessary -->
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <pattern>
+                    <pattern>{"severity": "%level", "service": "${springAppName:-unknown}", "trace":
+                        "%X{X-B3-TraceId:-none}", "span": "%X{X-B3-SpanId:-none}", "exportable":
+                        "%X{X-Span-Export:-false}", "pid": "${PID:-}", "thread": "%thread", "class": "%logger{40}",
+                        "rest": "%message"}
+                    </pattern>
+                </pattern>
+                <arguments/>
+            </providers>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="LOGSTASH"/>
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

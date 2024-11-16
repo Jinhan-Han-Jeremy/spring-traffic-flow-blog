@@ -1,21 +1,20 @@
 services:
   spring-server:
     build:
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile  # Dockerfile 경로 설정
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/adarticle-db
-      SPRING_DATASOURCE_USERNAME: jinhan
-      SPRING_DATASOURCE_PASSWORD: 57575han
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/adarticle-db
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/adarticle-db  # MySQL URL
+      SPRING_DATASOURCE_USERNAME: jinhan  # MySQL 사용자 이름
+      SPRING_DATASOURCE_PASSWORD: 57575han  # MySQL 비밀번호
+      SPRING_RABBITMQ_HOST: rabbitmq  # RabbitMQ 호스트
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/adarticle-db  # MongoDB URL
     ports:
-      - "8070:8070"
+      - "8070:8070"  # Spring Boot 서버 포트를 외부에 노출
     depends_on:
-      - mysql-db
-      - mongodb
-    ## 다음에 의존하는 서비스
+      - mysql-db  # MySQL 서비스가 먼저 실행되어야 함
+      - mongodb  # MongoDB 서비스가 먼저 실행되어야 함
     networks:
-      - app-network  # 네트워크 설정 추가
+      - app-network  # 다른 서비스와 통신하기 위한 네트워크 연결
 
   mysql-db:
     image: mysql:5.7
@@ -44,24 +43,15 @@ services:
       - ./data/elasticsearch:/usr/share/elasticsearch/data
     environment:
       discovery.type: single-node
-      ELASTIC_USERNAME: ${ELASTIC_USERNAME}  # 환경 변수 설정 필요
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+      ELASTIC_USERNAME: "jinhan"  # 환경 변수 설정 필요
+      ELASTIC_PASSWORD: "57575han"
       xpack.security.enabled: false
       xpack.security.enrollment.enabled: false
     networks:
       - app-network
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.5.0
-    container_name: kibana
-    environment:
-      ELASTICSEARCH_HOSTS: "http://elasticsearch:${ES_PORT}"
-    ports:
-      - "${KIBANA_PORT}:${KIBANA_PORT}"
-    volumes:
-      - ./config/kibana.yml:/usr/share/kibana/config/kibana.yml
-    networks:
-      - app-network
+    expose:
+      - "${ES_PORT}" ## - 외부 접속 시 REST API 호출을 위한 포트
+      - "${CLUSTER_ES_PORT}" ## - 클러스터 통신용 포트.
 
   logstash:
     image: docker.elastic.co/logstash/logstash:8.13.4
@@ -72,13 +62,24 @@ services:
     depends_on:
       - elasticsearch
     environment:
-      xpack.monitoring.enabled: false
-      LOGSTASH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      - "ELASTICSEARCH_HOST=elasticsearch"
+      - "ELASTICSEARCH_PORT=9200"
     volumes:
-      - ./logstash/pipeline:/usr/share/logstash/pipeline
-      - ./logstash/mysql-connector-j-9.0.0.jar:/usr/share/logstash/mysql-connector-j-9.0.0.jar
+      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
     networks:
       - app-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.4
+    container_name: kibana
+    ports:
+      - "${KIBANA_PORT}:${KIBANA_PORT}"
+    depends_on:
+      - elasticsearch
+    environment:
+      - "ELASTICSEARCH_URL=http://elasticsearch:9200"
+    volumes:
+      - ./kibana.yml:/usr/share/kibana/config/kibana.yml
 
   redis:
     image: redis:7
@@ -92,11 +93,11 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
-      - "5672:5672"    # RabbitMQ 서버 포트
-      - "15672:15672"  # 관리 콘솔 포트
+      - "${RABBITMQ_PORT}:${RABBITMQ_PORT}"  # RabbitMQ 서버 포트
+      - "${RABBITMQ_MANAGEMENT_PORT}:${RABBITMQ_MANAGEMENT_PORT}"  # 관리 콘솔 포트
     environment:
-      RABBITMQ_DEFAULT_USER: onion-user
-      RABBITMQ_DEFAULT_PASS: onion1!
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}  # 기본 사용자 이름
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}  # 기본 사용자 비밀번호
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
