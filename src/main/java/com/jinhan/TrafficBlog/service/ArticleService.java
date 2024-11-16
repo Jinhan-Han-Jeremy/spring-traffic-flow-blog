@@ -1,6 +1,5 @@
 package com.jinhan.TrafficBlog.service;
 
-
 import com.jinhan.TrafficBlog.dto.EditArticleDto;
 import com.jinhan.TrafficBlog.dto.WriteArticleDto;
 import com.jinhan.TrafficBlog.entity.Article;
@@ -42,46 +41,61 @@ public class ArticleService {
 
     private final ObjectMapper objectMapper;
 
-//    private final RabbitMQSender rabbitMQSender;
+    private final RabbitMQSender rabbitMQSender;
 
     @Autowired
     public ArticleService(BoardRepository boardRepository, ArticleRepository articleRepository, UserRepository userRepository,
-                          ElasticSearchService elasticSearchService, ObjectMapper objectMapper) {
-//                          RabbitMQSender rabbitMQSender) {
+                          ElasticSearchService elasticSearchService, ObjectMapper objectMapper, RabbitMQSender rabbitMQSender) {
         this.boardRepository = boardRepository;
         this.articleRepository = articleRepository;
         this.userRepository = userRepository;
         this.elasticSearchService = elasticSearchService;
         this.objectMapper = objectMapper;
-//        this.rabbitMQSender = rabbitMQSender;
+        this.rabbitMQSender = rabbitMQSender;
     }
 
     @Transactional
     public Article writeArticle(Long boardId, WriteArticleDto dto) throws JsonProcessingException {
+        // 현재 인증된 사용자의 정보를 가져옴
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
+        // 게시글 작성 제한을 초과했는지 확인하는 메서드 호출
         if (!this.isCanWriteArticle()) {
+            // 작성 제한이 초과되면 예외 발생
             throw new RateLimitException("article not written by rate limit");
         }
+
+        // 작성자 정보 조회 (username 기준으로 User 엔티티 조회)
         Optional<User> author = userRepository.findByUsername(userDetails.getUsername());
+        // 게시판 정보 조회 (boardId 기준으로 Board 엔티티 조회)
         Optional<Board> board = boardRepository.findById(boardId);
+
+        // 작성자 정보가 존재하지 않는 경우 예외 발생
         if (author.isEmpty()) {
             throw new ResourceNotFoundException("author not found");
         }
+
+        // 게시판 정보가 존재하지 않는 경우 예외 발생
         if (board.isEmpty()) {
             throw new ResourceNotFoundException("board not found");
         }
+
+        // 새로운 Article 객체 생성 및 게시판, 작성자, 제목, 내용을 설정
         Article article = new Article();
-        article.setBoard(board.get());
-        article.setAuthor(author.get());
-        article.setTitle(dto.getTitle());
-        article.setContent(dto.getContent());
+        article.setBoard(board.get());       // 조회된 게시판 정보 설정
+        article.setAuthor(author.get());     // 조회된 작성자 정보 설정
+        article.setTitle(dto.getTitle());    // DTO에서 전달받은 제목 설정
+        article.setContent(dto.getContent()); // DTO에서 전달받은 내용 설정
         articleRepository.save(article);
+
         this.indexArticle(article);
         WriteArticle articleNotification = new WriteArticle();
         articleNotification.setArticleId(article.getId());
         articleNotification.setUserId(author.get().getId());
-//        rabbitMQSender.send(articleNotification);
+
+        rabbitMQSender.send(articleNotification);
+
         return article;
     }
 
@@ -103,25 +117,33 @@ public class ArticleService {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Optional<User> author = userRepository.findByUsername(userDetails.getUsername());
         Optional<Board> board = boardRepository.findById(boardId);
+
         if (author.isEmpty()) {
             throw new ResourceNotFoundException("author not found");
         }
+
         if (board.isEmpty()) {
             throw new ResourceNotFoundException("board not found");
         }
+
         Optional<Article> article = articleRepository.findById(articleId);
+
         if (article.isEmpty()) {
             throw new ResourceNotFoundException("article not found");
         }
+
         if (article.get().getAuthor() != author.get()) {
             throw new ForbiddenException("article author different");
         }
+
         if (!this.isCanEditArticle()) {
             throw new RateLimitException("article not edited by rate limit");
         }
+
         if (dto.getTitle() != null) {
             article.get().setTitle(dto.getTitle().get());
         }
+
         if (dto.getContent() != null) {
             article.get().setContent(dto.getContent().get());
         }
@@ -136,22 +158,28 @@ public class ArticleService {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Optional<User> author = userRepository.findByUsername(userDetails.getUsername());
         Optional<Board> board = boardRepository.findById(boardId);
+
         if (author.isEmpty()) {
             throw new ResourceNotFoundException("author not found");
         }
+
         if (board.isEmpty()) {
             throw new ResourceNotFoundException("board not found");
         }
+
         Optional<Article> article = articleRepository.findById(articleId);
         if (article.isEmpty()) {
             throw new ResourceNotFoundException("article not found");
         }
+
         if (article.get().getAuthor() != author.get()) {
             throw new ForbiddenException("article author different");
         }
+
         if (!this.isCanEditArticle()) {
             throw new RateLimitException("article not edited by rate limit");
         }
+
         article.get().setIsDeleted(true);
         articleRepository.save(article.get());
         this.indexArticle(article.get());

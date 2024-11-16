@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Comment {
+public class Comment extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,22 +39,5 @@ public class Comment {
     @Column(nullable = false)
     private Boolean isDeleted = false;
 
-    @CreatedDate
-    @Column(insertable = true)
-    private LocalDateTime createdDate;
 
-    @LastModifiedDate
-    private LocalDateTime updatedDate;
-
-    // 엔티티가 처음 데이터베이스에 저장되기 전에 호출됨. 이 메서드를 통해 생성 날짜를 자동으로 설정.
-    @PrePersist
-    protected void onCreate() {
-        this.createdDate = LocalDateTime.now();
-    }
-
-    // 엔티티가 수정되기 전에 호출됨. 이 메서드를 통해 수정 날짜를 자동으로 설정.
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedDate = LocalDateTime.now();
-    }
 }

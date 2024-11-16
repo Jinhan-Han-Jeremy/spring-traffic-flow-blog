@@ -20,7 +20,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class User implements UserDetails {
+public class User extends BaseEntity implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,22 +48,14 @@ public class User implements UserDetails {
     @Column(insertable = true)
     private LocalDateTime createdDate;
 
-    @LastModifiedDate
-    private LocalDateTime updatedDate;
-
     // 엔티티가 처음 데이터베이스에 저장되기 전에 호출됨. 이 메서드를 통해 생성 날짜를 자동으로 설정.
-    @PrePersist
-    protected void onCreate() {
-        this.createdDate = LocalDateTime.now();
+    @Override
+    public void onCreate() {
+        super.onCreate(); // BaseEntity의 onCreate() 호출
+        this.createdDate = LocalDateTime.now(); // User 엔티티의 createdDate 설정
         if (deviceList == null) {
             deviceList = new ArrayList<>(); // 기본값을 빈 배열로 설정
         }
-    }
-
-    // 엔티티가 수정되기 전에 호출됨. 이 메서드를 통해 수정 날짜를 자동으로 설정.
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedDate = LocalDateTime.now();
     }
 
     //사용자 권한을 통해 접근 제어를 반환

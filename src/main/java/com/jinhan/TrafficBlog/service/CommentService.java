@@ -16,6 +16,7 @@ import com.jinhan.TrafficBlog.repository.BoardRepository;
 import com.jinhan.TrafficBlog.repository.CommentRepository;
 import com.jinhan.TrafficBlog.repository.UserRepository;
 //import com.jinhan.backend.task.DailyHotArticleTasks; -- redis 필요
+import com.jinhan.TrafficBlog.task.DailyHotArticleTasks;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -34,7 +35,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-//import static com.jinhan.backend.task.DailyHotArticleTasks.YESTERDAY_REDIS_KEY;
+import static com.jinhan.TrafficBlog.task.DailyHotArticleTasks.YESTERDAY_REDIS_KEY;
 
 @Service
 public class CommentService {
@@ -49,22 +50,23 @@ public class CommentService {
 
     private final ObjectMapper objectMapper;
 
-//    private final RabbitMQSender rabbitMQSender;
+    private final RabbitMQSender rabbitMQSender;
 
-//    private RedisTemplate<String, Object> redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
     public CommentService(BoardRepository boardRepository, ArticleRepository articleRepository, UserRepository userRepository, CommentRepository commentRepository,
-                          ElasticSearchService elasticSearchService, ObjectMapper objectMapper) {
-//                          RabbitMQSender rabbitMQSender, RedisTemplate<String, Object> redisTemplate) {
+                          ElasticSearchService elasticSearchService, ObjectMapper objectMapper,
+                          RabbitMQSender rabbitMQSender, RedisTemplate<String, Object> redisTemplate) {
+
         this.boardRepository = boardRepository;
         this.articleRepository = articleRepository;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
         this.elasticSearchService = elasticSearchService;
         this.objectMapper = objectMapper;
-//        this.rabbitMQSender = rabbitMQSender;
-//        this.redisTemplate = redisTemplate;
+        this.rabbitMQSender = rabbitMQSender;
+        this.redisTemplate = redisTemplate;
     }
 
     @Transactional
@@ -96,7 +98,7 @@ public class CommentService {
         commentRepository.save(comment);
         WriteComment writeComment = new WriteComment();
         writeComment.setCommentId(comment.getId());
-//        rabbitMQSender.send(writeComment);
+        rabbitMQSender.send(writeComment);
         return comment;
     }
 
@@ -113,25 +115,32 @@ public class CommentService {
         if (author.isEmpty()) {
             throw new ResourceNotFoundException("author not found");
         }
+
         if (board.isEmpty()) {
             throw new ResourceNotFoundException("board not found");
         }
+
         if (article.isEmpty()) {
             throw new ResourceNotFoundException("article not found");
         }
+
         if (article.get().getIsDeleted()) {
             throw new ForbiddenException("article is deleted");
         }
+
         Optional<Comment> comment = commentRepository.findById(commentId);
         if (comment.isEmpty() || comment.get().getIsDeleted()) {
             throw new ResourceNotFoundException("comment not found");
         }
+
         if (comment.get().getAuthor() != author.get()) {
             throw new ForbiddenException("comment author different");
         }
+
         if (dto.getContent() != null) {
             comment.get().setContent(dto.getContent());
         }
+
         commentRepository.save(comment.get());
         return comment.get();
     }
@@ -139,28 +148,35 @@ public class CommentService {
     public boolean deleteComment(Long boardId, Long articleId, Long commentId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
         if (!this.isCanEditComment()) {
             throw new RateLimitException("comment not written by rate limit");
         }
         Optional<User> author = userRepository.findByUsername(userDetails.getUsername());
         Optional<Board> board = boardRepository.findById(boardId);
         Optional<Article> article = articleRepository.findById(articleId);
+
         if (author.isEmpty()) {
             throw new ResourceNotFoundException("author not found");
         }
+
         if (board.isEmpty()) {
             throw new ResourceNotFoundException("board not found");
         }
+
         if (article.isEmpty()) {
             throw new ResourceNotFoundException("article not found");
         }
+
         if (article.get().getIsDeleted()) {
             throw new ForbiddenException("article is deleted");
         }
+
         Optional<Comment> comment = commentRepository.findById(commentId);
         if (comment.isEmpty() || comment.get().getIsDeleted()) {
             throw new ResourceNotFoundException("comment not found");
         }
+
         if (comment.get().getAuthor() != author.get()) {
             throw new ForbiddenException("comment author different");
         }
@@ -172,6 +188,7 @@ public class CommentService {
     private boolean isCanWriteComment() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
         Comment latestComment = commentRepository.findLatestCommentOrderByCreatedDate(userDetails.getUsername());
         if (latestComment == null) {
             return true;
@@ -182,6 +199,7 @@ public class CommentService {
     private boolean isCanEditComment() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
         Comment latestComment = commentRepository.findLatestCommentOrderByCreatedDate(userDetails.getUsername());
         if (latestComment == null || latestComment.getUpdatedDate() == null) {
             return true;
@@ -202,32 +220,35 @@ public class CommentService {
     @Async
     @Transactional
     protected CompletableFuture<Article> getArticle(Long boardId, Long articleId) throws JsonProcessingException {
-//        Object yesterdayHotArticleTempObj = redisTemplate.opsForHash().get(DailyHotArticleTasks.YESTERDAY_REDIS_KEY + articleId, articleId);
-//        Object weekHotArticleTempObj = redisTemplate.opsForHash().get(DailyHotArticleTasks.WEEK_REDIS_KEY + articleId, articleId);
-//        if (yesterdayHotArticleTempObj != null || weekHotArticleTempObj != null) {
-//            HotArticle hotArticle = (HotArticle) (yesterdayHotArticleTempObj != null ? yesterdayHotArticleTempObj : weekHotArticleTempObj);
-//            Article article = new Article();
-//            article.setId(hotArticle.getId());
-//            article.setTitle(hotArticle.getTitle());
-//            article.setContent(hotArticle.getContent());
-//            User user = new User();
-//            user.setUsername(hotArticle.getAuthorName());
-//            article.setAuthor(user);
-//            article.setCreatedDate(hotArticle.getCreatedDate());
-//            article.setUpdatedDate(hotArticle.getUpdatedDate());
-//            article.setViewCount(hotArticle.getViewCount());
-//            return CompletableFuture.completedFuture(article);
-//        }
+        Object yesterdayHotArticleTempObj = redisTemplate.opsForHash().get(DailyHotArticleTasks.YESTERDAY_REDIS_KEY + articleId, articleId);
+        Object weekHotArticleTempObj = redisTemplate.opsForHash().get(DailyHotArticleTasks.WEEK_REDIS_KEY + articleId, articleId);
+
+        if (yesterdayHotArticleTempObj != null || weekHotArticleTempObj != null) {
+            HotArticle hotArticle = (HotArticle) (yesterdayHotArticleTempObj != null ? yesterdayHotArticleTempObj : weekHotArticleTempObj);
+            Article article = new Article();
+            article.setId(hotArticle.getId());
+            article.setTitle(hotArticle.getTitle());
+            article.setContent(hotArticle.getContent());
+            User user = new User();
+            user.setUsername(hotArticle.getAuthorName());
+            article.setAuthor(user);
+            article.setCreatedDate(hotArticle.getCreatedDate());
+            article.setUpdatedDate(hotArticle.getUpdatedDate());
+            article.setViewCount(hotArticle.getViewCount());
+            return CompletableFuture.completedFuture(article);
+        }
 
         // redis에 없으면 mysql에서 조회
         Optional<Board> board = boardRepository.findById(boardId);
         if (board.isEmpty()) {
             throw new ResourceNotFoundException("board not found");
         }
+
         Optional<Article> article = articleRepository.findById(articleId);
         if (article.isEmpty() || article.get().getIsDeleted()) {
             throw new ResourceNotFoundException("article not found");
         }
+
         article.get().setViewCount(article.get().getViewCount() + 1);
         articleRepository.save(article.get());
         String articleJson = objectMapper.writeValueAsString(article.get());
