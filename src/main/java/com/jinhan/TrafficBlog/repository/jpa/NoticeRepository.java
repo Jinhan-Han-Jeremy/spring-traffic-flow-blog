@@ -1,6 +1,5 @@
-package com.jinhan.TrafficBlog.repository;
+package com.jinhan.TrafficBlog.repository.jpa;
 
-import com.jinhan.TrafficBlog.entity.Comment;
 import com.jinhan.TrafficBlog.entity.Notice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

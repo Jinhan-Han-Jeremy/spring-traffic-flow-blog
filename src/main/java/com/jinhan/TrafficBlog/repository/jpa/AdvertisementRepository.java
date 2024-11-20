@@ -1,4 +1,4 @@
-package com.jinhan.TrafficBlog.repository;
+package com.jinhan.TrafficBlog.repository.jpa;
 
 import com.jinhan.TrafficBlog.entity.Advertisement;
 import org.springframework.data.jpa.repository.JpaRepository;

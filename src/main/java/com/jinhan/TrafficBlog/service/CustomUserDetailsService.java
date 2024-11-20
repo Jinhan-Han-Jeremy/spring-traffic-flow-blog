@@ -2,7 +2,7 @@ package com.jinhan.TrafficBlog.service;
 
 
 import com.jinhan.TrafficBlog.entity.User;
-import com.jinhan.TrafficBlog.repository.UserRepository;
+import com.jinhan.TrafficBlog.repository.jpa.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

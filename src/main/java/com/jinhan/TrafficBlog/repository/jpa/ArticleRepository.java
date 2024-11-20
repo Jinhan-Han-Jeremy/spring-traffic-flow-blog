@@ -1,8 +1,8 @@
-package com.jinhan.TrafficBlog.repository;
+package com.jinhan.TrafficBlog.repository.jpa;
 
 
 import com.jinhan.TrafficBlog.entity.Article;
-import com.jinhan.TrafficBlog.entity.User;
+import com.jinhan.TrafficBlog.service.RepositoryInterface;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,10 +10,9 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
-public interface ArticleRepository extends JpaRepository<Article, Long> {
+public interface ArticleRepository extends JpaRepository<Article, Long>, RepositoryInterface<Article>  {
     @Query("SELECT a FROM Article a WHERE a.board.id = :boardId AND a.isDeleted = false ORDER BY a.createdDate DESC LIMIT 10")
     List<Article> findTop10ByBoardIdOrderByCreatedDateDesc(@Param("boardId") Long boardId);
 

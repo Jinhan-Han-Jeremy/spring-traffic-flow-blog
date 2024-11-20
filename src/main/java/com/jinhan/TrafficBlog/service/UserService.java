@@ -4,7 +4,7 @@ import com.jinhan.TrafficBlog.dto.SignUpUser;
 import com.jinhan.TrafficBlog.dto.WriteDeviceDto;
 import com.jinhan.TrafficBlog.entity.Device;
 import com.jinhan.TrafficBlog.entity.User;
-import com.jinhan.TrafficBlog.repository.UserRepository;
+import com.jinhan.TrafficBlog.repository.jpa.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

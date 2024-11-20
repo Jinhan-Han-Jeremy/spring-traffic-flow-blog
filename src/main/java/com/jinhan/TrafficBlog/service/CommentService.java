@@ -3,19 +3,16 @@ package com.jinhan.TrafficBlog.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jinhan.TrafficBlog.dto.EditArticleDto;
-import com.jinhan.TrafficBlog.dto.WriteArticleDto;
 import com.jinhan.TrafficBlog.dto.WriteCommentDto;
 import com.jinhan.TrafficBlog.entity.*;
 import com.jinhan.TrafficBlog.exception.ForbiddenException;
 import com.jinhan.TrafficBlog.exception.RateLimitException;
 import com.jinhan.TrafficBlog.exception.ResourceNotFoundException;
 import com.jinhan.TrafficBlog.pojo.WriteComment;
-import com.jinhan.TrafficBlog.repository.ArticleRepository;
-import com.jinhan.TrafficBlog.repository.BoardRepository;
-import com.jinhan.TrafficBlog.repository.CommentRepository;
-import com.jinhan.TrafficBlog.repository.UserRepository;
-//import com.jinhan.backend.task.DailyHotArticleTasks; -- redis 필요
+import com.jinhan.TrafficBlog.repository.jpa.ArticleRepository;
+import com.jinhan.TrafficBlog.repository.jpa.BoardRepository;
+import com.jinhan.TrafficBlog.repository.jpa.CommentRepository;
+import com.jinhan.TrafficBlog.repository.jpa.UserRepository;
 import com.jinhan.TrafficBlog.task.DailyHotArticleTasks;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,11 +28,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-
-import static com.jinhan.TrafficBlog.task.DailyHotArticleTasks.YESTERDAY_REDIS_KEY;
 
 @Service
 public class CommentService {
@@ -46,6 +40,8 @@ public class CommentService {
 
     private final UserRepository userRepository;
 
+    private final ValidationService validationService;
+
     private final ElasticSearchService elasticSearchService;
 
     private final ObjectMapper objectMapper;
@@ -54,15 +50,17 @@ public class CommentService {
 
     private RedisTemplate<String, Object> redisTemplate;
 
+    //각 동일한 데이터 타입 형태의 bean을 사용하지 않아서 Qualifier를 선언하지 않아도 된다
     @Autowired
     public CommentService(BoardRepository boardRepository, ArticleRepository articleRepository, UserRepository userRepository, CommentRepository commentRepository,
-                          ElasticSearchService elasticSearchService, ObjectMapper objectMapper,
+                          ValidationService validationService, ElasticSearchService elasticSearchService, ObjectMapper objectMapper,
                           RabbitMQSender rabbitMQSender, RedisTemplate<String, Object> redisTemplate) {
 
         this.boardRepository = boardRepository;
         this.articleRepository = articleRepository;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
+        this.validationService = validationService;
         this.elasticSearchService = elasticSearchService;
         this.objectMapper = objectMapper;
         this.rabbitMQSender = rabbitMQSender;
@@ -73,27 +71,24 @@ public class CommentService {
     public Comment writeComment(Long boardId, Long articleId, WriteCommentDto dto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
         if (!this.isCanWriteComment()) {
             throw new RateLimitException("comment not written by rate limit");
         }
-        Optional<User> author = userRepository.findByUsername(userDetails.getUsername());
-        Optional<Board> board = boardRepository.findById(boardId);
-        Optional<Article> article = articleRepository.findById(articleId);
-        if (author.isEmpty()) {
-            throw new ResourceNotFoundException("author not found");
-        }
-        if (board.isEmpty()) {
-            throw new ResourceNotFoundException("board not found");
-        }
-        if (article.isEmpty()) {
-            throw new ResourceNotFoundException("article not found");
-        }
-        if (article.get().getIsDeleted()) {
+
+        User author = validationService.currentUser(userRepository);
+
+        validationService.validate(boardId, boardRepository, "Board");
+
+        Article article = validationService.validate(articleId, articleRepository, "Article");
+
+
+        if (article.getIsDeleted()) {
             throw new ForbiddenException("article is deleted");
         }
         Comment comment = new Comment();
-        comment.setArticle(article.get());
-        comment.setAuthor(author.get());
+        comment.setArticle(article);
+        comment.setAuthor(author);
         comment.setContent(dto.getContent());
         commentRepository.save(comment);
         WriteComment writeComment = new WriteComment();
@@ -109,40 +104,27 @@ public class CommentService {
         if (!this.isCanEditComment()) {
             throw new RateLimitException("comment not written by rate limit");
         }
-        Optional<User> author = userRepository.findByUsername(userDetails.getUsername());
-        Optional<Board> board = boardRepository.findById(boardId);
-        Optional<Article> article = articleRepository.findById(articleId);
-        if (author.isEmpty()) {
-            throw new ResourceNotFoundException("author not found");
-        }
 
-        if (board.isEmpty()) {
-            throw new ResourceNotFoundException("board not found");
-        }
+        User author = validationService.currentUser(userRepository);
+        validationService.validate(boardId, boardRepository, "Board");
+        Article article = validationService.validate(articleId, articleRepository, "Article");
 
-        if (article.isEmpty()) {
-            throw new ResourceNotFoundException("article not found");
-        }
-
-        if (article.get().getIsDeleted()) {
+        if (article.getIsDeleted()) {
             throw new ForbiddenException("article is deleted");
         }
 
-        Optional<Comment> comment = commentRepository.findById(commentId);
-        if (comment.isEmpty() || comment.get().getIsDeleted()) {
-            throw new ResourceNotFoundException("comment not found");
-        }
+        Comment comment = validationService.validate(commentId, commentRepository, "Comment");
 
-        if (comment.get().getAuthor() != author.get()) {
+        if (comment.getAuthor() != author) {
             throw new ForbiddenException("comment author different");
         }
 
         if (dto.getContent() != null) {
-            comment.get().setContent(dto.getContent());
+            comment.setContent(dto.getContent());
         }
 
-        commentRepository.save(comment.get());
-        return comment.get();
+        commentRepository.save(comment);
+        return comment;
     }
 
     public boolean deleteComment(Long boardId, Long articleId, Long commentId) {
@@ -152,36 +134,27 @@ public class CommentService {
         if (!this.isCanEditComment()) {
             throw new RateLimitException("comment not written by rate limit");
         }
-        Optional<User> author = userRepository.findByUsername(userDetails.getUsername());
-        Optional<Board> board = boardRepository.findById(boardId);
-        Optional<Article> article = articleRepository.findById(articleId);
 
-        if (author.isEmpty()) {
-            throw new ResourceNotFoundException("author not found");
-        }
+        User author = validationService.currentUser(userRepository);
+        validationService.validate(boardId, boardRepository, "Board");
+        Article article = validationService.validate(articleId, articleRepository, "Article");
 
-        if (board.isEmpty()) {
-            throw new ResourceNotFoundException("board not found");
-        }
-
-        if (article.isEmpty()) {
-            throw new ResourceNotFoundException("article not found");
-        }
-
-        if (article.get().getIsDeleted()) {
+        if (article.getIsDeleted()) {
             throw new ForbiddenException("article is deleted");
         }
 
-        Optional<Comment> comment = commentRepository.findById(commentId);
-        if (comment.isEmpty() || comment.get().getIsDeleted()) {
-            throw new ResourceNotFoundException("comment not found");
+        Comment comment = validationService.validate(commentId, commentRepository, "Comment");
+
+        if (comment.getIsDeleted()) {
+            throw new ResourceNotFoundException("comment is deleted");
         }
 
-        if (comment.get().getAuthor() != author.get()) {
+        if (comment.getAuthor() != author) {
             throw new ForbiddenException("comment author different");
         }
-        comment.get().setIsDeleted(true);
-        commentRepository.save(comment.get());
+
+        comment.setIsDeleted(true);
+        commentRepository.save(comment);
         return true;
     }
 
@@ -238,22 +211,18 @@ public class CommentService {
             return CompletableFuture.completedFuture(article);
         }
 
-        // redis에 없으면 mysql에서 조회
-        Optional<Board> board = boardRepository.findById(boardId);
-        if (board.isEmpty()) {
-            throw new ResourceNotFoundException("board not found");
-        }
+        validationService.validate(boardId, boardRepository, "Board");
 
-        Optional<Article> article = articleRepository.findById(articleId);
-        if (article.isEmpty() || article.get().getIsDeleted()) {
+        Article article = validationService.validate(articleId, articleRepository, "Article");
+        if (article.getIsDeleted()) {
             throw new ResourceNotFoundException("article not found");
         }
 
-        article.get().setViewCount(article.get().getViewCount() + 1);
-        articleRepository.save(article.get());
-        String articleJson = objectMapper.writeValueAsString(article.get());
-        elasticSearchService.indexArticleDocument(article.get().getId().toString(), articleJson).block();
-        return CompletableFuture.completedFuture(article.get());
+        article.setViewCount(article.getViewCount() + 1);
+        articleRepository.save(article);
+        String articleJson = objectMapper.writeValueAsString(article);
+        elasticSearchService.indexArticleDocument(article.getId().toString(), articleJson).block();
+        return CompletableFuture.completedFuture(article);
     }
 
     @Async

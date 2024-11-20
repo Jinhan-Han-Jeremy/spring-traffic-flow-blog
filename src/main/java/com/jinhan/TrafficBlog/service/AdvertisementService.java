@@ -4,24 +4,19 @@ import com.jinhan.TrafficBlog.dto.AdvertisementDto;
 import com.jinhan.TrafficBlog.entity.AdClickHistory;
 import com.jinhan.TrafficBlog.entity.AdViewHistory;
 import com.jinhan.TrafficBlog.entity.Advertisement;
-import com.jinhan.TrafficBlog.repository.AdClickHistoryRepository;
-import com.jinhan.TrafficBlog.repository.AdViewHistoryRepository;
-import com.jinhan.TrafficBlog.repository.AdvertisementRepository;
+import com.jinhan.TrafficBlog.repository.mongo.AdClickHistoryRepository;
+import com.jinhan.TrafficBlog.repository.mongo.AdViewHistoryRepository;
+import com.jinhan.TrafficBlog.repository.jpa.AdvertisementRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.*;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service

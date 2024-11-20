@@ -2,14 +2,13 @@ package com.jinhan.TrafficBlog.service;
 
 import com.jinhan.TrafficBlog.entity.JwtBlacklist;
 import com.jinhan.TrafficBlog.jwt.JwtUtil;
-import com.jinhan.TrafficBlog.repository.JwtBlacklistRepository;
+import com.jinhan.TrafficBlog.repository.jpa.JwtBlacklistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
 import java.util.Optional;
 
 @Service

@@ -3,7 +3,7 @@ package com.jinhan.TrafficBlog.service;
 import com.jinhan.TrafficBlog.dto.boards.BoardDto;
 import com.jinhan.TrafficBlog.dto.boards.BoardResponseDto;
 import com.jinhan.TrafficBlog.entity.Board;
-import com.jinhan.TrafficBlog.repository.BoardRepository;
+import com.jinhan.TrafficBlog.repository.jpa.BoardRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,15 +14,23 @@ import java.util.Optional;
 public class BoardService {
 
     private final BoardRepository boardRepository;
+    private final ValidationService validationService;
 
     @Autowired
-    public BoardService(BoardRepository boardRepository) {
+    public BoardService(BoardRepository boardRepository, ValidationService validationService) {
         this.boardRepository = boardRepository;
+        this.validationService = validationService;
     }
 
     // Create a new board
     @Transactional
     public BoardResponseDto createBoard(BoardDto boardDto) {
+
+        boolean boardExists = boardRepository.existsByTitle(boardDto.getTitle());
+        if (boardExists) {
+            throw new IllegalArgumentException("A board with the same title already exists.");
+        }
+
         Board board = new Board();
         board.setTitle(boardDto.getTitle());
         board.setDescription(boardDto.getDescription());
@@ -33,12 +41,16 @@ public class BoardService {
     // Update an existing board
     @Transactional
     public Optional<BoardResponseDto> updateBoard(Long boardId, BoardDto boardDto) {
-        return boardRepository.findById(boardId).map(board -> {
-            board.setTitle(boardDto.getTitle());
-            board.setDescription(boardDto.getDescription());
-            boardRepository.save(board);
-            return new BoardResponseDto(board);
-        });
+
+        // ValidationService를 통해 Board 검증 및 조회
+        Board board = validationService.validate(boardId, boardRepository, "Board");
+
+        // 보드 정보를 수정하고 저장
+        board.setTitle(boardDto.getTitle());
+        board.setDescription(boardDto.getDescription());
+        boardRepository.save(board);
+
+        return Optional.of(new BoardResponseDto(board));
     }
 
     // Delete a board
@@ -49,6 +61,8 @@ public class BoardService {
 
     // Find a board by ID (for retrieving single board)
     public Optional<BoardResponseDto> findBoardById(Long boardId) {
-        return boardRepository.findById(boardId).map(BoardResponseDto::new);
+        RepositoryInterface<Board> repositoryInterface = (RepositoryInterface<Board>) boardRepository;
+        return repositoryInterface.findById(boardId)
+                .map(BoardResponseDto::new);
     }
 }

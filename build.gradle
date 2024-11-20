@@ -66,6 +66,8 @@ dependencies {
 	// RabbitMQ 메시지 브로커와 통합을 위한 지원 (메시지 큐 처리)
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 
+	implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+
 	// Lombok은 코드에서 getter, setter, 생성자 등을 자동으로 생성해주는 라이브러리 (컴파일 시에만 사용)
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'

@@ -1,4 +1,4 @@
-package com.jinhan.TrafficBlog.repository;
+package com.jinhan.TrafficBlog.repository.jpa;
 
 import com.jinhan.TrafficBlog.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;

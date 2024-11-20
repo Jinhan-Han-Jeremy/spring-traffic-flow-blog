@@ -2,7 +2,7 @@ package com.jinhan.TrafficBlog.task;
 
 import com.jinhan.TrafficBlog.entity.Article;
 import com.jinhan.TrafficBlog.entity.HotArticle;
-import com.jinhan.TrafficBlog.repository.ArticleRepository;
+import com.jinhan.TrafficBlog.repository.jpa.ArticleRepository;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

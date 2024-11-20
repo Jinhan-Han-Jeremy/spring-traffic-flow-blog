@@ -2,15 +2,9 @@ package com.jinhan.TrafficBlog.service;
 
 import com.jinhan.TrafficBlog.entity.*;
 import com.jinhan.TrafficBlog.exception.ResourceNotFoundException;
-import com.jinhan.TrafficBlog.repository.*;
-import jakarta.transaction.Transactional;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.*;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.redis.core.RedisTemplate;
+import com.jinhan.TrafficBlog.repository.jpa.NoticeRepository;
+import com.jinhan.TrafficBlog.repository.jpa.UserRepository;
+import com.jinhan.TrafficBlog.repository.mongo.UserNotificationHistoryRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
