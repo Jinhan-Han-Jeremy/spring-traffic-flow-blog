@@ -8,6 +8,9 @@ server:
 
 # 스프링 애플리케이션 설정
 spring:
+  batch:
+    job:
+      enabled: false
   # RabbitMQ 설정
   rabbitmq:
     host: localhost  # RabbitMQ 호스트

@@ -1,13 +1,11 @@
 package com.jinhan.TrafficBlog.controller;
 
-
 import com.jinhan.TrafficBlog.dto.WriteNotice;
 import com.jinhan.TrafficBlog.entity.Notice;
+import com.jinhan.TrafficBlog.service.NoticeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/notices")

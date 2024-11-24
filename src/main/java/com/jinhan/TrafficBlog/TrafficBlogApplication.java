@@ -4,15 +4,14 @@ import com.jinhan.TrafficBlog.repository.mongo.AdClickHistoryRepository;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
-
 
 @SpringBootApplication
 @EnableJpaRepositories(
@@ -20,6 +19,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 		excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = AdClickHistoryRepository.class)
 )
 @EnableMongoRepositories(basePackages = "com.jinhan.TrafficBlog.repository.mongo")
+@Profile("default")
 public class TrafficBlogApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(TrafficBlogApplication.class, args);
