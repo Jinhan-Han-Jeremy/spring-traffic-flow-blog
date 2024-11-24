@@ -1,0 +1,2 @@
+package com.jinhan.TrafficBlog.controller;public class DeviceController {
+}
