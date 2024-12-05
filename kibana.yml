@@ -3,7 +3,8 @@ server.name: kibana
 server.host: "0.0.0.0"
 
 #
-elasticsearch.hosts: http://elasticsearch:9200
+elasticsearch.hosts:
+  - "http://elasticsearch:9200"
 elasticsearch.username: "jinhan"
 elasticsearch.password: "57575han"
 
@@ -11,3 +12,8 @@ elasticsearch.password: "57575han"
 xpack.encryptedSavedObjects.encryptionKey: 87d862caa0395e1c3601349e51e653a3
 xpack.reporting.encryptionKey: 959bf22e9bda37366d0e2be65336bf15
 xpack.security.encryptionKey: 28e0c689f24a22b390f6ab2dc624852cnm
+
+
+logging:
+  root:
+    level: info  # 설정 가능 레벨: error, warning, info, debug

@@ -1,5 +1,6 @@
 package com.jinhan.TrafficBlog.controller;
 
+import com.jinhan.TrafficBlog.dto.AdHistoryResult;
 import com.jinhan.TrafficBlog.dto.AdvertisementDto;
 import com.jinhan.TrafficBlog.entity.Advertisement;
 import com.jinhan.TrafficBlog.service.AdvertisementService;
@@ -90,7 +91,7 @@ public class AdvertisementController {
     /**
      * 광고 클릭 추적 API
      * 광고 클릭 시 IP 기반 추적
-     *
+     *a
      * @param adId 클릭된 광고 ID
      * @param request HTTP 요청 객체 (IP 주소 추출용)
      * @return 클릭 성공 메시지와 200 OK 상태
@@ -116,16 +117,16 @@ public class AdvertisementController {
      *
      * @return 광고 조회 통계 정보와 200 OK 상태
      */
-//    @GetMapping("/ads/history")
-//    public ResponseEntity<List<AdHistoryResult>> getAdHistory() {
-//        // 광고 조회 이력을 광고 ID별로 그룹화
-//        List<AdHistoryResult> result = advertisementService.getAdViewHistoryGroupedByAdId();
-//
-//        // 광고 조회 통계 정보 데이터베이스에 저장
-//        advertisementService.insertAdViewStat(result);
-//
-//        // 광고 조회 통계 정보 반환
-//        return ResponseEntity.ok(result);
-//    }
+    @GetMapping("/ads/history")
+    public ResponseEntity<List<AdHistoryResult>> getAdHistory() {
+        // 광고 조회 이력을 광고 ID별로 그룹화
+        List<AdHistoryResult> result = advertisementService.getAdViewHistoryGroupedByAdId();
+
+        // 광고 조회 통계 정보 데이터베이스에 저장
+        advertisementService.insertAdViewStat(result);
+
+        // 광고 조회 통계 정보 반환
+        return ResponseEntity.ok(result);
+    }
 
 }

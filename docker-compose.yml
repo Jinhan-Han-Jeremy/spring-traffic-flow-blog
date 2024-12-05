@@ -1,5 +1,5 @@
 services:
-  spring-server:
+  spring-boot-app:
     build:
       dockerfile: docker/Dockerfile  # Dockerfile 경로 설정
     environment:
@@ -7,12 +7,15 @@ services:
       SPRING_DATASOURCE_USERNAME: jinhan  # MySQL 사용자 이름
       SPRING_DATASOURCE_PASSWORD: 57575han  # MySQL 비밀번호
       SPRING_RABBITMQ_HOST: rabbitmq  # RabbitMQ 호스트
-      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/adarticle-db  # MongoDB URL
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/advertise-db  # MongoDB URL
     ports:
       - "8070:8070"  # Spring Boot 서버 포트를 외부에 노출
     depends_on:
-      - mysql-db  # MySQL 서비스가 먼저 실행되어야 함
-      - mongodb  # MongoDB 서비스가 먼저 실행되어야 함
+      - mysql-db
+      - mongodb
+      - redis
+      - logstash
+      - rabbitmq
     networks:
       - app-network  # 다른 서비스와 통신하기 위한 네트워크 연결
 
@@ -21,7 +24,7 @@ services:
     restart: always
     platform: linux/amd64
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DB_NAME}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
@@ -31,7 +34,13 @@ services:
       - ./my.cnf:/etc/mysql/conf.d/my.cnf  # 로컬 my.cnf 파일을 MySQL 설정 파일로 사용
       - db_data:/var/lib/mysql  # 데이터 저장을 위한 볼륨 연결
     networks:
-      - app-network
+      - app-network  # 다른 서비스와 통신하기 위한 네트워크 연결
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   #
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
@@ -48,7 +57,7 @@ services:
       xpack.security.enabled: false
       xpack.security.enrollment.enabled: false
     networks:
-      - app-network
+      - app-network  # 다른 서비스와 통신하기 위한 네트워크 연결
     expose:
       - "${ES_PORT}" ## - 외부 접속 시 REST API 호출을 위한 포트
       - "${CLUSTER_ES_PORT}" ## - 클러스터 통신용 포트.
@@ -57,7 +66,7 @@ services:
     image: docker.elastic.co/logstash/logstash:8.13.4
     container_name: logstash
     ports:
-      - "${LOGSTASH_PORT}:${LOGSTASH_PORT}"
+      - "9400:9400"
       - "${LOGSTASH_PORT_MAPPING}:${LOGSTASH_PORT_MAPPING}"
     depends_on:
       - elasticsearch
@@ -67,7 +76,7 @@ services:
     volumes:
       - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
     networks:
-      - app-network
+      - app-network  # 다른 서비스와 통신하기 위한 네트워크 연결
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.13.4
@@ -80,6 +89,8 @@ services:
       - "ELASTICSEARCH_URL=http://elasticsearch:9200"
     volumes:
       - ./kibana.yml:/usr/share/kibana/config/kibana.yml
+    networks:
+      - app-network  # 다른 서비스와 통신하기 위한 네트워크 연결
 
   redis:
     image: redis:7
@@ -88,6 +99,8 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+    networks:
+      - app-network  # 다른 서비스와 통신하기 위한 네트워크 연결
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -100,6 +113,8 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}  # 기본 사용자 비밀번호
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - app-network  # 다른 서비스와 통신하기 위한 네트워크 연결
 
   mongodb:
     image: mongo:7
@@ -109,7 +124,7 @@ services:
     volumes:
       - mongo_data:/data/db   # 데이터 저장을 위한 볼륨 연결
     networks:
-      - app-network   # app-network를 통해 네트워크에 연결
+      - app-network  # 다른 서비스와 통신하기 위한 네트워크 연결
 
 volumes:
   db_data:  # MySQL 데이터
