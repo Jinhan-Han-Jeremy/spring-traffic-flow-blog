@@ -3,7 +3,7 @@
     <include resource="org/springframework/boot/logging/logback/base.xml"/>
 
     <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-        <destination>localhost:9400</destination> <!-- Adjust as necessary -->
+        <destination>logstash:9400</destination> <!-- Adjust as necessary -->
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
                 <timestamp>
@@ -19,6 +19,7 @@
                 <arguments/>
             </providers>
         </encoder>
+        <reconnectionDelay>30000</reconnectionDelay>
     </appender>
 
     <root level="INFO">

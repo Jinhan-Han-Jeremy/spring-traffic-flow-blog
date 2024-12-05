@@ -7,13 +7,16 @@ server:
 
 # 스프링 애플리케이션 설정
 spring:
+  profiles:
+    active: default
   batch:
     job:
       enabled: false
+
   # RabbitMQ 설정
   rabbitmq:
     host: localhost  # RabbitMQ 호스트
-    port: 5672  # RabbitMQ 포트
+    port: 15672  # RabbitMQ 포트
     username: jinhan  # RabbitMQ 사용자 이름
     password: 57575han  # RabbitMQ 비밀번호
 

@@ -69,7 +69,7 @@ public class UserController {
      * @return 사용자 목록과 HTTP 200 OK 상태
      */
     @GetMapping("")
-    public ResponseEntity<List<User>> getUserS() {
+    public ResponseEntity<List<User>> getUsers() {
         return ResponseEntity.ok(userService.getUsers());
     }
 

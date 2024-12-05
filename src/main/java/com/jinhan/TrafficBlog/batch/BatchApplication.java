@@ -1,4 +1,4 @@
-package com.jinhan.TrafficBlog;
+package com.jinhan.TrafficBlog.batch;
 
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.boot.SpringApplication;
