@@ -39,3 +39,7 @@ out/
 .vscode/
 
 docker/**
+!docker/Dockerfile
+!docker/docker-compose.yml
+!docker/*.conf
+!docker/.env.example

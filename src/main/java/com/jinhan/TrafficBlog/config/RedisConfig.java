@@ -6,6 +6,8 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 // Redis 연결 전략 설정을 위한 스프링 구성 클래스
 @Configuration
@@ -29,8 +31,8 @@ public class RedisConfig {
         mapper.registerModule(new JavaTimeModule());
 
         // 커스텀 직렬화 암호화 전략
-        // template.setKeySerializer(new StringRedisSerializer());
-        // template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
 
         return template;
     }
