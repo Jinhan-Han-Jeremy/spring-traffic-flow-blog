@@ -1,7 +1,8 @@
 services:
   spring-boot-app:
     build:
-      dockerfile: docker/Dockerfile  # Dockerfile 경로 설정
+      context: .
+      dockerfile: docker/Dockerfile
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/adarticle-db  # MySQL URL
       SPRING_DATASOURCE_USERNAME: jinhan  # MySQL 사용자 이름
