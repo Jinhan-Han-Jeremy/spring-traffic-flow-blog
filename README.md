@@ -6,6 +6,9 @@
 - **도구 및 사욯한 기술**: 스프링부트 + 자바 + elastic - ELK + Redis + +RabbitMq + mysql + mongodb 
 - **기능**: 광고 전환율 및 노출도를 분석하고 핵심 정보를 추출하는 기능을 스프링부트 어플리케이션에 제공
 
+### 서비스 기술 및 구성과 flow
+https://www.notion.so/1a5f3ccd4fb581e8bbe6fdbbcb989075
+
 ## 데이터 베이스 adarticle-db
 ### Article 테이블
 - id (BIGINT, 자동 증가, 기본 키)
