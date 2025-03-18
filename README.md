@@ -9,6 +9,8 @@
 ### 서비스 기술 기획서 및 구성 flow
 https://www.notion.so/1a5f3ccd4fb581e8bbe6fdbbcb989075
 
+![image](https://github.com/user-attachments/assets/b03d8d0d-3443-4c2e-9b0d-a70dc65ce356)
+
 ## 데이터 베이스 adarticle-db
 ### Article 테이블
 - id (BIGINT, 자동 증가, 기본 키)
